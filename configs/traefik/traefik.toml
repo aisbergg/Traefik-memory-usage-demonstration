@@ -1,0 +1,186 @@
+################################################################################
+## Global Configuration
+##   Documentation: https://docs.traefik.io/configuration/commons/
+################################################################################
+
+# Periodically check if a new version has been released.
+checkNewVersion = false
+
+# Tells traefik whether it should keep the trailing slashes in the paths (e.g. /paths/) or redirect to the no trailing slash paths instead (/paths).
+keepTrailingSlash = false
+
+# Providers throttle duration.
+providersThrottleDuration = "2s"
+
+# Controls the maximum idle (keep-alive) connections to keep per-host.
+maxIdleConnsPerHost = 200
+
+# If set to true invalid SSL certificates are accepted for backends.
+# This disables detection of man-in-the-middle attacks so should only be used on secure backend networks.
+insecureSkipVerify = true
+
+# Register Certificates in the rootCA.
+# rootCAs = [ "/mycert.cert" ]
+
+# Entrypoints to be used by frontends that do not specify any entrypoint.
+# Each frontend can specify its own entrypoints.
+defaultEntryPoints = ["http", "https"]
+
+# Allow the use of 0 as server weight.
+# - false: a weight 0 means internally a weight of 1.
+# - true: a weight 0 means internally a weight of 0 (a server with a weight of 0 is removed from the available servers).
+AllowMinWeightZero = false
+
+logLevel = "DEBUG"
+
+
+################################################################################
+## API and Dashboard
+##   Documentation: https://docs.traefik.io/configuration/api/
+################################################################################
+
+[api]
+  # Enable Dashboard
+  dashboard = true
+  # Name of the related entry point
+  entryPoint = "dashboard"
+
+
+################################################################################
+## Docker Provider
+##   Documentation: https://docs.traefik.io/configuration/backends/docker/#security-considerations
+################################################################################
+
+[docker]
+  # Docker server endpoint. Can be a tcp or a unix socket endpoint.
+  endpoint = "unix:///var/run/docker.sock"
+  # Enable watch docker changes.
+  watch = true
+  # Expose containers by default in Traefik.
+  # If set to false, containers that don't have `traefik.enable=true` will be ignored.
+  exposedByDefault = false
+  # Use the IP address from the binded port instead of the inner network one.
+  #
+  # In case no IP address is attached to the binded port (or in case
+  # there is no bind), the inner network one will be used as a fallback.
+  usebindportip = false
+  # Use Swarm Mode services as data provider.
+  swarmMode = true
+  # Polling interval (in seconds) for Swarm Mode.
+  swarmModeRefreshSeconds = 20
+
+
+################################################################################
+## Entrypoints
+##   Documentation: https://docs.traefik.io/configuration/entrypoints/
+################################################################################
+
+[entryPoints]
+  [entryPoints.http]
+    address = ":80"
+    compress = true
+    # redirect is done for each frontend separatly
+    # [entryPoints.http.redirect]
+    #   entryPoint = "https"
+    [entryPoints.http.forwardedHeaders]
+      trustedIPs = ["127.0.0.1"]
+
+  [entryPoints.https]
+    address = ":443"
+    compress = true
+    [entryPoints.https.forwardedHeaders]
+      trustedIPs = ["127.0.0.1"]
+    [entryPoints.https.tls]
+      minVersion = "VersionTLS12"
+      # see https://godoc.org/crypto/tls#pkg-constants
+      cipherSuites = [
+        "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+        "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
+        "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+        "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+        "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+        "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+        "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
+        "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256"
+      ]
+
+  [entryPoints.dashboard]
+    address = ":8080"
+
+
+################################################################################
+## Life Cycle (Shutdown Phase)
+##   Documentation: https://docs.traefik.io/configuration/commons/#life-cycle
+################################################################################
+
+[lifeCycle]
+  # Duration to keep accepting requests prior to initiating the graceful
+  # termination period (as defined by the `graceTimeOut` option). This
+  # option is meant to give downstream load-balancers sufficient time to
+  # take Traefik out of rotation.
+  # Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
+  # If no units are provided, the value is parsed assuming seconds.
+  # The zero duration disables the request accepting grace period, i.e.,
+  # Traefik will immediately proceed to the grace period.
+  requestAcceptGraceTimeout = "0s"
+
+  # Duration to give active requests a chance to finish before Traefik stops.
+  # Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
+  # If no units are provided, the value is parsed assuming seconds.
+  # Note: in this time frame no new requests are accepted.
+  graceTimeOut = "10s"
+
+
+################################################################################
+## Timeouts
+##   Documentation: https://docs.traefik.io/configuration/commons/#timeouts
+################################################################################
+
+[respondingTimeouts]
+  # readTimeout is the maximum duration for reading the entire request, including the body.
+  readTimeout = "0s"
+
+  # writeTimeout is the maximum duration before timing out writes of the response.
+  writeTimeout = "0s"
+
+  # idleTimeout is the maximum duration an idle (keep-alive) connection will remain idle before closing itself.
+  idleTimeout = "360s"
+
+[forwardingTimeouts]
+  # dialTimeout is the amount of time to wait until a connection to a backend server can be established.
+  dialTimeout = "30s"
+
+  # responseHeaderTimeout is the amount of time to wait for a server's response headers after fully writing the request (including its body, if any).
+  responseHeaderTimeout = "0s"
+
+
+################################################################################
+## Logging
+##   Documentation: https://docs.traefik.io/configuration/logs/
+################################################################################
+
+# [traefikLog]
+#   filePath = "/container/log/traefik.log"
+#   format   = "json"
+
+# [accessLog]
+#   filePath = "/container/log/access.log"
+#   format = "json"
+#
+#   [accessLog.filters]
+#     statusCodes = ["200", "300-302"]
+#     retryAttempts = true
+#     minDuration = "10ms"
+#
+#   [accessLog.fields]
+#     defaultMode = "keep"
+#     [accessLog.fields.names]
+#       "ClientUsername" = "drop"
+#       # ...
+#
+#     [accessLog.fields.headers]
+#       defaultMode = "keep"
+#       [accessLog.fields.headers.names]
+#         "User-Agent" = "redact"
+#         "Authorization" = "drop"
+#         "Content-Type" = "keep"
