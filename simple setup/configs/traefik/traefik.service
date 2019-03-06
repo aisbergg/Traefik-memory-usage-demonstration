@@ -1,0 +1,14 @@
+[Unit]
+Description=Traefik
+Documentation=https://docs.traefik.io
+After=network.target
+
+[Service]
+# configure service behavior
+Type=notify
+ExecStart=/usr/bin/traefik --configFile=/configs/traefik/traefik.toml
+Restart=always
+WatchdogSec=1s
+
+[Install]
+WantedBy=multi-user.target

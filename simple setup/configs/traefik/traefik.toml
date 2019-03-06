@@ -1,0 +1,37 @@
+logLevel = "DEBUG"
+
+[entryPoints]
+  [entryPoints.http]
+    address = ":80"
+
+[file]
+  [frontends]
+    [frontends.frontend1]
+      entryPoints = ["http"]
+      backend = "backend1"
+      [frontends.frontend1.routes]
+        [frontends.frontend1.routes.route0]
+          rule = "Host:without-errorpages.dev.local"
+
+    [frontends.frontend2]
+      entryPoints = ["http"]
+      backend = "backend1"
+      [frontends.frontend2.routes]
+        [frontends.frontend2.routes.route0]
+          rule = "Host:with-errorpages.dev.local"
+
+      [frontends.frontend2.errors]
+        [frontends.frontend2.errors.errorPage0]
+          status = ["500-599"]
+          backend = "backend-error"
+          query = "/{status}.html"
+
+    [backends.backend1]
+      [backends.backend1.servers]
+        [backends.backend1.servers.server0]
+          url = "http://127.0.0.1:8080"
+
+    [backends.backend-error]
+      [backends.backend-error.servers]
+        [backends.backend-error.servers.server0]
+          url = "http://127.0.0.1:8080"
